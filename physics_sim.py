@@ -108,7 +108,6 @@ Bc = V(0,0); Br = V(360,0)
 Bc2 = V(300,0); Br2 = V(100,0)
 cs = [(Bc,Br),(Bc2,Br2)]
 g = V(0,0)
-#print(help(pygame.draw.circle))
 #surface.blit(ball)
 
 world = []
@@ -116,15 +115,19 @@ world = []
 r = random.sample; r2 = random.randrange
 b1 = Ball(-600,350,0,0,color=RED,radius=5,mass=1)
 b2 = Ball(50,-200,0,2.2,color=GREEN,radius=5,mass=2)
-b3 = Ball(111,-208,0,0,color= WHITE, radius=20,mass=300)
+b3 = Ball(111,-208,4,2,color= WHITE, radius=20,mass=300)
 b4 = Ball(300,-310,-1,0,color=YELLOW,radius=5,mass=2)
+
+def mass_propor_rad(rad):
+	return rad * 15
 
 def f(a,b):
 	return random.randint(a,b)
 def randomcolor():
 	return f(0,255), f(0,255), f(0,255)
 for i in range(8):
-	world.append(Ball(f(-300,300),f(-400,400),f(-3,3),f(-3,3),color=randomcolor(),radius=f(5,25),mass=f(50,200)))
+	rad = f(5,25)
+	world.append(Ball(f(-300,300),f(-400,400),f(-3,3),f(-3,3),color=randomcolor(),radius=rad,mass=mass_propor_rad(rad)))
 for i in range(4):
 	cs.append((V(f(-320,321), f(-320,321)), V(f(5,100), 0)))
 
@@ -146,19 +149,18 @@ def collidegrad(ball,grad=None,vert=0,hor=0):
 		ball.vel = V(-ball.vel.x,ball.vel.y)
 	elif hor:
 		ball.vel = V(ball.vel.x,-ball.vel.y)
-	#ball.vel = Vec2D(round(ball.vel.x,4), round(ball.vel.y,4))
-	#^if u1.y >= 0:
-	ball.vel = (0.9*ball.vel)
-	ball.pos += ball.vel
+	#ball.vel = (0.9*ball.vel)
+	#ball.pos += ball.vel
 	return ball
 
 
 def collidewalls(b):
-	if not (-640< b.pos.x < 640):
+	if not (-640+b.radius< b.pos.x < 640-b.radius):
 		b = collidegrad(b,vert=1)
-	if not (-375 < b.pos.y < 376):
+	if not (-375+b.radius < b.pos.y < 376-b.radius):
 		b.vel -= g #added to correct
 		b = collidegrad(b,hor=1)
+	#print(b.vel.mag2())
 	return b
 
 ####################################################
@@ -372,13 +374,19 @@ def spacegravity(i,b,world):
 				r2 = v.mag2()
 				if r2 > 0:
 					#Here we're using F = Gm1m2/r^2, and finding the accelerations
-					G = 5
+					G = 1
 					k = G/r2
 					b_acc = k*b_2.mass
 					b_2acc = k*b.mass
 					b.vel += b_acc*(v.unit())
 					b_2.vel += b_2acc *(-(v.unit()))
+		return b
 
+def simulate_space_gravity(i,b,world):
+	b = spacegravity(i,b,world)
+	b = collidewalls(b)
+	collideBalls(i,b,world)
+	return b
 
 
 ###############################################################
@@ -477,8 +485,13 @@ def simulate_sand(w_set):
 	w_set = cellular_automata(surface,w_set)
 	return w_set
 
+##One simulation at a time please, lol
 
+
+#for the sand cellular automaton, uncomment the line below, and line 514
 w_set = create_set_for_sand()
+
+
 ct = 0
 while True:
 	surface.fill((0,0,0))
@@ -486,24 +499,24 @@ while True:
 		if ev.type == pygame.QUIT:
 			pygame.quit()
 			quit()
+
+	#for space_gravity or balls_colliding
 	for i,b in enumerate(world):
 		pass
-		#simulate_sand(w_set)
+		#uncomment one of the lines below for the relevant simulation
 		#simulate_balls_colliding(i,b,cs)
-		#spacegravity(i,b,world)
-		#collidewalls(b)
-		#b.pos += b.vel
-		#drawball(b)
+		#simulate_space_gravity(i,b,world)
+
+		#if one line above is uncommented, uncomment both lines below
+		# b.pos += b.vel
+		# drawball(b)
 	
-	w_set = simulate_sand(w_set)
+	w_set = simulate_sand(w_set) #uncomment this line for sand simulation
 
 	pygame.display.update()
-	#clock.tick(90)
+	clock.tick(60)
 	ct += 1
 
 
-
-
-
-
-
+	
+	
